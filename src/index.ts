@@ -1,35 +1,40 @@
 import express from 'express';
-import { getDatabase } from './config/database';
-import userRoutes from "./routes/userRoutes"
-import bodyParser from 'body-parser';
-import morgan from 'morgan'
+import cors from "cors";
+import morgan from "morgan";
+import { getDatabase } from "./config/database";
+import userRoutes from "./routes/userRoutes";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(morgan("dev"))
-app.use("/api/user", userRoutes)
+app.use(
+	cors({
+		origin: "http://localhost:5173",
+		methods: ["GET", "POST", "PUT", "DELETE"],
+		allowedHeaders: ["Content-Type", "Authorization"],
+		credentials: true,
+	})
+);
+app.use(morgan("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-async function main() {
-  try {
-    // Initialize database
-    const sequelize = await getDatabase();
+app.use("/api/user", userRoutes);
 
-    
-    app.get('/', (req, res) => {
-      res.send('Backend is running with PostgreSQL and TypeScript!');
-    });
-    
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('Application startup failed:', error);
-    process.exit(1);
-  }
+app.get("/", (req, res) => {
+	res.send("Backend is running");
+});
+
+async function startServer() {
+	try {
+		await getDatabase();
+		app.listen(PORT, () => {
+			console.log(`Server running on http://localhost:${PORT}`);
+		});
+	} catch (error) {
+		console.error("Server startup failed:", error);
+		process.exit(1);
+	}
 }
 
-main();
+startServer();
