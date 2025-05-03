@@ -21,24 +21,19 @@ const getConfig = (): DatabaseConfig => ({
 });
 
 export const initializeSequelize = (): Sequelize => {
-  const config = getConfig();
-  return new Sequelize(
-    config.database,
-    config.username,
-    config.password,
-    {
-      host: config.host,
-      port: config.port,
-      dialect: 'postgres',
-      logging: console.log,
-      define: {
-        timestamps: true,
-        underscored: true
-      }
-    }
-  );
+	const config = getConfig();
+	return new Sequelize(config.database, config.username, config.password, {
+		host: config.host,
+		port: config.port,
+		dialect: "postgres",
+		logging: console.log,
+		define: {
+			timestamps: true,
+			underscored: true,
+		},
+	});
 };
-
+  
 
 export const ensureDatabaseExists = async (): Promise<void> => {
   const config = getConfig();
