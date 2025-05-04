@@ -16,18 +16,18 @@ interface AuthResponse {
 	token?: string;
 	user?: {
 		id: number;
-		username: string;
 		email: string;
 		firstname: string;
 		lastname: string;
+		program: string;
 	};
 }
 
 export const register = async (req: Request, res: Response<AuthResponse>) => {
 	try {
-		const { username, firstname, lastname, email, password } = req.body;
+		const { program, firstname, lastname, email, password } = req.body;
 
-		if (!username || !firstname || !lastname || !email || !password) {
+		if (!program || !firstname || !lastname || !email || !password) {
 			return res.status(400).json({
 				success: false,
 				message: "All fields are required",
@@ -36,7 +36,7 @@ export const register = async (req: Request, res: Response<AuthResponse>) => {
 
 		const existingUser = await User.findOne({
 			where: {
-				[Op.or]: [{ username }, { email }],
+				[Op.or]: [{ email }],
 			},
 		});
 
@@ -52,7 +52,7 @@ export const register = async (req: Request, res: Response<AuthResponse>) => {
 
 		// Create new user with proper typing
 		const newUser = await User.create({
-			username,
+			program,
 			firstname,
 			lastname,
 			email,
@@ -73,7 +73,7 @@ export const register = async (req: Request, res: Response<AuthResponse>) => {
 			token,
 			user: {
 				id: newUser.id,
-				username: newUser.username,
+				program: newUser.program,
 				email: newUser.email,
 				firstname: newUser.firstname,
 				lastname: newUser.lastname,
@@ -131,7 +131,7 @@ export const login = async (req: Request, res: Response<AuthResponse>) => {
 			token,
 			user: {
 				id: user.id,
-				username: user.username,
+				program: user.program,
 				email: user.email,
 				firstname: user.firstname,
 				lastname: user.lastname,

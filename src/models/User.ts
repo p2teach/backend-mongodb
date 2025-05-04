@@ -7,10 +7,10 @@ export interface UserCreationAttributes
 
 interface UserAttributes {
 	id: number;
-	username: string;
 	firstname: string;
 	lastname: string;
 	email: string;
+	program: string;
 	password: string;
 	created_at?: Date;
 	updated_at?: Date;
@@ -18,10 +18,10 @@ interface UserAttributes {
 
 class User extends Model<UserAttributes> implements UserAttributes {
 	public id!: number;
-	public username!: string;
 	public firstname!: string;
 	public lastname!: string;
 	public email!: string;
+	public program!: string;
 	public password!: string;
 	public created_at!: Date;
 	public updated_at!: Date;
@@ -34,10 +34,9 @@ User.init(
 			autoIncrement: true,
 			primaryKey: true,
 		},
-		username: {
+		program: {
 			type: DataTypes.STRING(50),
 			allowNull: false,
-			unique: true,
 		},
 		firstname: {
 			type: DataTypes.STRING(100),
