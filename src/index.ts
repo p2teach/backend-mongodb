@@ -3,6 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import { getDatabase } from "./config/database";
 import userRoutes from "./routes/userRoutes";
+import sessionRoutes from "./routes/sessionRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/user", userRoutes);
+app.use("/api/sessions", sessionRoutes);
 
 app.get("/", (req, res) => {
 	res.send("Backend is running");

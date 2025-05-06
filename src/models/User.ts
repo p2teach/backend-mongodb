@@ -5,7 +5,7 @@ const sequelize = initializeSequelize();
 export interface UserCreationAttributes
 	extends Optional<UserAttributes, "id" | "created_at" | "updated_at"> {}
 
-interface UserAttributes {
+export interface UserAttributes {
 	id: number;
 	firstname: string;
 	lastname: string;
@@ -17,6 +17,7 @@ interface UserAttributes {
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {
+	[x: string]: any;
 	public id!: number;
 	public firstname!: string;
 	public lastname!: string;
