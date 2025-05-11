@@ -30,8 +30,10 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@types/ethereumjs-util": "^6.1.2",
     "bcrypt": "^5.1.1",
     "body-parser": "^2.2.0",
+    "ethereumjs-util": "^7.1.5",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0"
   }

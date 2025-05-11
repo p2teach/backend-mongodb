@@ -4,6 +4,7 @@ import morgan from "morgan";
 import { getDatabase } from "./config/database";
 import userRoutes from "./routes/userRoutes";
 import sessionRoutes from "./routes/sessionRoutes";
+import bookingRoutes from "./routes/bookingRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,6 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/user", userRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 app.get("/", (req, res) => {
 	res.send("Backend is running");
