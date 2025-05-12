@@ -108,3 +108,42 @@ export const getUserBookings = async (req: any, res: any) => {
         });
     }
 };
+
+export const deleteBooking = async (req: any, res: any) => {
+	const bookingId = req.params.bookingId;
+	console.log("booking id ----", bookingId);
+
+	// Validate the booking ID is a valid UUID
+	if (!bookingId) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid booking ID format",
+		});
+	}
+
+	try {
+		// Check if booking exists
+		const booking = await Booking.findByPk(bookingId);
+
+		if (!booking) {
+			return res.status(404).json({
+				success: false,
+				message: "Booking not found",
+			});
+		}
+
+		await booking.destroy();
+
+		return res.status(200).json({
+			success: true,
+			message: "Booking deleted successfully",
+		});
+	} catch (error: any) {
+		console.error("Error deleting booking:", error);
+		return res.status(500).json({
+			success: false,
+			message: "Failed to delete booking",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};

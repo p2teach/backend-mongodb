@@ -1,9 +1,14 @@
 import express from 'express'
-import { createBookings, getUserBookings } from '../controllers/bookingController'
+import {
+	createBookings,
+	deleteBooking,
+	getUserBookings,
+} from "../controllers/bookingController";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post("/create", createBookings)
-router.get("/user/:userId", getUserBookings)
+router.post("/create", createBookings);
+router.get("/user/:userId", getUserBookings);
+router.delete("/user/:bookingId", deleteBooking);
 
 export default router

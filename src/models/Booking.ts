@@ -7,16 +7,16 @@ import User from "./User";
 const sequelize = initializeSequelize();
 
 export interface BookingAttributes {
-    id: number; // Changed from string to number to match SERIAL in PostgreSQL
-    location: string;
-    date: Date;
-    time: string;
-    tutorid: number; // Changed from string to number
-    studentid: number; // Changed from string to number
-    tutorwalletaddress: string;
-    studentwalletaddress: string;
-    created_at?: Date;
-    updated_at?: Date;
+	id: number;
+	location: string;
+	date: Date;
+	time: string;
+	tutorid: number;
+	studentid: number;
+	tutorwalletaddress: string;
+	studentwalletaddress: string;
+	created_at?: Date;
+	updated_at?: Date;
 }
 
 export interface BookingCreationAttributes 
