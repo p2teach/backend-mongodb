@@ -6,9 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.register = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const User_1 = __importDefault(require("../models/User"));
-dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-here";
 const SALT_ROUNDS = 10;
 const register = async (req, res) => {

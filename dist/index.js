@@ -10,8 +10,10 @@ const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const sessionRoutes_1 = __importDefault(require("./routes/sessionRoutes"));
 const bookingRoutes_1 = __importDefault(require("./routes/bookingRoutes"));
 const database_1 = __importDefault(require("./config/database"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
+dotenv_1.default.config();
 app.use((0, cors_1.default)({
     origin: "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
