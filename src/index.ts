@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from "cors";
 import morgan from "morgan";
-import { getDatabase } from "./config/database";
 import userRoutes from "./routes/userRoutes";
 import sessionRoutes from "./routes/sessionRoutes";
 import bookingRoutes from "./routes/bookingRoutes";
+import connectDb from "./config/database";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
 
 async function startServer() {
 	try {
-		await getDatabase();
+		connectDb();
 		app.listen(PORT, () => {
 			console.log(`Server running on http://localhost:${PORT}`);
 		});

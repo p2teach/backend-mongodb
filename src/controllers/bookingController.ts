@@ -1,129 +1,134 @@
-import { Request, Response } from 'express';
 import Booking from "../models/Booking";
 import User from "../models/User";
+import mongoose from "mongoose";
 
+// Create Booking
 export const createBookings = async (req: any, res: any) => {
-    console.log("payload", req.body)
-    const { location, time, date, tutorid, studentid, tutorwalletaddress, studentwalletaddress } = req.body;
+	try {
+		const {
+			location,
+			time,
+			date,
+			tutorid,
+			studentid,
+			tutorwalletaddress,
+			studentwalletaddress,
+		} = req.body;
 
-    if (!location || !time || !date || !tutorid || !studentid || !tutorwalletaddress || !studentwalletaddress) {
-        return res.status(400).json({
-            success: false,
-            message: "All fields (location, time, date, tutorid, studentid) are required"
-        });
-    }
+		if (
+			!location ||
+			!time ||
+			!date ||
+			!tutorid ||
+			!studentid ||
+			!tutorwalletaddress ||
+			!studentwalletaddress
+		) {
+			return res.status(400).json({
+				success: false,
+				message:
+					"All fields (location, time, date, tutorid, studentid, wallet addresses) are required",
+			});
+		}
 
-    try {
-        const existingBooking = await Booking.findOne({
-            where: {
-                tutorid,
-                date,
-                time
-            }
-        });
+		const existingBooking = await Booking.findOne({
+			tutor: tutorid,
+			date,
+			time,
+		});
 
-        if (existingBooking) {
-            return res.status(409).json({
-                success: false,
-                message: "A session already exists for this tutor at the specified date and time"
-            });
-        }
+		if (existingBooking) {
+			return res.status(409).json({
+				success: false,
+				message:
+					"A booking already exists for this tutor at the specified date and time",
+			});
+		}
 
-        const tutor = await User.findByPk(tutorid);
-        const student = await User.findByPk(studentid);
+		const tutor = await User.findById(tutorid);
+		const student = await User.findById(studentid);
 
-        if (!tutor || !student) {
-            return res.status(404).json({
-                success: false,
-                message: "Tutor or student not found"
-            });
-        }
+		if (!tutor || !student) {
+			return res.status(404).json({
+				success: false,
+				message: "Tutor or student not found",
+			});
+		}
 
-        const newBooking = await Booking.create({
-            location,
-            time,
-            date,
-            tutorid,
-            studentid,
-            tutorwalletaddress,
-            studentwalletaddress
-        });
+		const newBooking = await Booking.create({
+			location,
+			time,
+			date,
+			tutor: tutorid,
+			student: studentid,
+			tutorwalletaddress,
+			studentwalletaddress,
+		});
 
-        return res.status(201).json({
-            success: true,
-            data: newBooking,
-            message: "Booking created successfully"
-        });
-
-    } catch (error: any) {
-        console.error("Booking creation error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-};
-
-export const getUserBookings = async (req: any, res: any) => {
-    try {
-        const userId = parseInt(req.params.userId);
-        const user = await User.findByPk(userId, {
-            include: [
-                { 
-                    model: Booking, 
-                    as: 'tutorBookings',
-                    include: [{ model: User, as: 'student' }]
-                },
-                { 
-                    model: Booking, 
-                    as: 'studentBookings',
-                    include: [{ model: User, as: 'tutor' }]
-                }
-            ]
-        });
-
-        if (!user) {
-            console.log("user not found")
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            data: {
-                tutorBookings: user.tutorBookings,
-                studentBookings: user.studentBookings
-            }
-        });
-
-    } catch (error: any) {
-        console.error("Error fetching bookings:", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-};
-
-export const deleteBooking = async (req: any, res: any) => {
-	const bookingId = req.params.bookingId;
-	console.log("booking id ----", bookingId);
-
-	// Validate the booking ID is a valid UUID
-	if (!bookingId) {
-		return res.status(400).json({
+		return res.status(201).json({
+			success: true,
+			data: newBooking,
+			message: "Booking created successfully",
+		});
+	} catch (error: any) {
+		console.error("Booking creation error:", error);
+		return res.status(500).json({
 			success: false,
-			message: "Invalid booking ID format",
+			message: "Internal server error",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
 		});
 	}
+};
 
+// Get User Bookings (both as tutor & student)
+export const getUserBookings = async (req: any, res: any) => {
 	try {
-		// Check if booking exists
-		const booking = await Booking.findByPk(bookingId);
+		const userId = req.params.userId;
+
+		if (!mongoose.isValidObjectId(userId)) {
+			return res.status(400).json({
+				success: false,
+				message: "Invalid user ID format",
+			});
+		}
+
+		const tutorBookings = await Booking.find({ tutor: userId }).populate(
+			"student"
+		);
+		const studentBookings = await Booking.find({ student: userId }).populate(
+			"tutor"
+		);
+
+		return res.status(200).json({
+			success: true,
+			data: {
+				tutorBookings,
+				studentBookings,
+			},
+		});
+	} catch (error: any) {
+		console.error("Error fetching bookings:", error);
+		res.status(500).json({
+			success: false,
+			message: "Internal server error",
+			error: process.env.NODE_ENV === "development" ? error.message : undefined,
+		});
+	}
+};
+
+// Delete Booking
+export const deleteBooking = async (req: any, res: any) => {
+	try {
+		const bookingId = req.params.bookingId;
+
+		if (!mongoose.isValidObjectId(bookingId)) {
+			return res.status(400).json({
+				success: false,
+				message: "Invalid booking ID format",
+			});
+		}
+
+		const booking = await Booking.findById(bookingId);
 
 		if (!booking) {
 			return res.status(404).json({
@@ -132,7 +137,7 @@ export const deleteBooking = async (req: any, res: any) => {
 			});
 		}
 
-		await booking.destroy();
+		await Booking.deleteOne({ _id: bookingId });
 
 		return res.status(200).json({
 			success: true,

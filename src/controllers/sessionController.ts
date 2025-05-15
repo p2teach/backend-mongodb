@@ -1,6 +1,7 @@
-import Session from "../models/Session"
-import User from "../models/User";
+import Session from "../models/Session";
+import User, { IUser } from "../models/User";
 
+// Create Session
 export const createSession = async (req: any, res: any) => {
 	try {
 		const {
@@ -25,21 +26,21 @@ export const createSession = async (req: any, res: any) => {
 				.json({ message: "All fields are required", success: false });
 		}
 
-		const user = await User.findByPk(user_id);
+		const user = await User.findById(user_id);
 		if (!user) {
 			return res
 				.status(404)
 				.json({ message: "User not found", success: false });
 		}
 
-		const session = await Session.create({
-			user_id,
+		const session = await new Session({
+			user: user._id,
 			coursetitle,
 			subjectitle,
 			price,
-			walletaddress,
 			duration,
-		});
+			walletaddress,
+		}).save();
 
 		return res.status(201).json({
 			message: "Session created successfully",
@@ -54,22 +55,23 @@ export const createSession = async (req: any, res: any) => {
 	}
 };
 
+// Update Session
 export const updateSession = async (req: any, res: any) => {
 	try {
 		const { id } = req.params;
 		const { coursetitle, subjectitle, price, duration } = req.body;
 
-		const session = await Session.findByPk(id);
+		const session = await Session.findById(id);
 		if (!session) {
 			return res.status(404).json({ error: "Session not found" });
 		}
 
-		await session.update({
-			coursetitle: coursetitle || session.coursetitle,
-			subjectitle: subjectitle || session.subjectitle,
-			price: price || session.price,
-			duration: duration || session.duration,
-		});
+		session.coursetitle = coursetitle || session.coursetitle;
+		session.subjectitle = subjectitle || session.subjectitle;
+		session.price = price || session.price;
+		session.duration = duration || session.duration;
+
+		await session.save();
 
 		return res.status(200).json({
 			message: "Session updated successfully",
@@ -81,98 +83,98 @@ export const updateSession = async (req: any, res: any) => {
 	}
 };
 
+// Delete Session
 export const deleteSession = async (req: any, res: any) => {
 	try {
 		const { id } = req.params;
 
-		const session = await Session.findByPk(id);
+		const session = await Session.findByIdAndDelete(id);
 		if (!session) {
 			return res.status(404).json({ error: "Session not found" });
 		}
 
-		await session.destroy();
-
-		return res.status(200).json({
-			message: "Session deleted successfully",
-		});
+		return res.status(200).json({ message: "Session deleted successfully" });
 	} catch (error) {
 		console.error("Error deleting session:", error);
 		return res.status(500).json({ error: "Internal server error" });
 	}
 };
 
+// Get User's Sessions
 export const getUserSessions = async (req: any, res: any) => {
 	try {
 		const { user_id } = req.params;
 
-		const user = await User.findByPk(user_id, {
-			include: [{ model: Session, as: "sessions" }],
-		});
+		const user = await User.findById(user_id).populate("sessions");
 		if (!user) {
 			return res.status(404).json({ error: "User not found" });
 		}
 
-		return res.status(200).json({
-			sessions: user,
+		const sessions = await Session.find({ user: user._id }).populate({
+			path: "user",
+			select: "firstname lastname email program",
 		});
+
+		return res.status(200).json({ sessions });
 	} catch (error) {
 		console.error("Error fetching user sessions:", error);
 		return res.status(500).json({ error: "Internal server error" });
 	}
 };
 
+// Get single Session
 export const getSession = async (req: any, res: any) => {
 	try {
 		const { id } = req.params;
 
-		const session = await Session.findByPk(id, {
-			include: [{ model: User, as: "user" }],
+		const session = await Session.findById(id).populate({
+			path: "user",
+			select: "firstname lastname email program",
 		});
-
 		if (!session) {
 			return res.status(404).json({ error: "Session not found" });
 		}
 
-		return res.status(200).json({
-			session,
-		});
+		return res.status(200).json({ session });
 	} catch (error) {
 		console.error("Error fetching session:", error);
 		return res.status(500).json({ error: "Internal server error" });
 	}
 };
 
+// Get All Sessions
 export const getAllSessions = async (req: any, res: any) => {
 	try {
-		const sessions = await Session.findAll({
-			include: [
-				{
-					model: User,
-					as: "user",
-					attributes: ["id", "firstname", "lastname", "email", "program"],
-				},
-			],
-			order: [["created_at", "DESC"]],
-		});
+		const sessions = await Session.find()
+			.populate({
+				path: "user",
+				select: "firstname lastname email program",
+			})
+			.sort({ created_at: -1 });
 
-		// Format the response to avoid sending sensitive data
-		const formattedSessions = sessions.map((session) => ({
-			id: session.id,
-			coursetitle: session.coursetitle,
-			subjectitle: session.subjectitle,
-			price: session.price,
-			duration: session.duration,
-			createdAt: session.created_at,
-			walletaddress: session.walletaddress,
-			tutor: {
-				id: session.user?.id,
-				name: session.user
-					? `${session.user.firstname} ${session.user.lastname}`
-					: "Unknown",
-				email: session.user?.email,
-				program: session.user?.program,
-			},
-		}));
+		const formattedSessions = sessions.map((session) => {
+			const user = session.user as IUser;
+			return {
+				id: session._id,
+				coursetitle: session.coursetitle,
+				subjectitle: session.subjectitle,
+				price: session.price,
+				duration: session.duration,
+				createdAt: session.createdAt,
+				walletaddress: session.walletaddress,
+				tutor:
+					session.user &&
+					typeof session.user === "object" &&
+					"firstname" in session.user
+						? {
+								id: user._id,
+								name: `${user.firstname} ${user.lastname}`,
+								email: user.email,
+								program: user.program,
+						  }
+						: null,
+			};
+		});
 
 		return res.status(200).json({
 			success: true,

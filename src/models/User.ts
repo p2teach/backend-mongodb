@@ -1,86 +1,37 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import { initializeSequelize } from "../config/database";
-const sequelize = initializeSequelize();
+import mongoose, { Document, Schema, Model } from "mongoose";
 
-export interface UserCreationAttributes
-	extends Optional<UserAttributes, "id" | "created_at" | "updated_at"> {}
-
-export interface UserAttributes {
-	id: number;
+// 1. Define TypeScript interface for your document
+export interface IUser extends Document {
 	firstname: string;
 	lastname: string;
 	email: string;
 	program: string;
 	password: string;
-	created_at?: Date;
-	updated_at?: Date;
+	createdAt?: Date;
+	updatedAt?: Date;
 }
 
-class User extends Model<UserAttributes> implements UserAttributes {
-	[x: string]: any;
-	public id!: number;
-	public firstname!: string;
-	public lastname!: string;
-	public email!: string;
-	public program!: string;
-	public password!: string;
-	public created_at!: Date;
-	public updated_at!: Date;
-}
-
-User.init(
+// 2. Create schema
+const UserSchema: Schema<IUser> = new Schema<IUser>(
 	{
-		id: {
-			type: DataTypes.INTEGER,
-			autoIncrement: true,
-			primaryKey: true,
-		},
-		program: {
-			type: DataTypes.STRING(50),
-			allowNull: false,
-		},
-		firstname: {
-			type: DataTypes.STRING(100),
-			allowNull: false,
-			field: "firstname", // Explicit mapping
-		},
-		lastname: {
-			type: DataTypes.STRING(100),
-			allowNull: false,
-			field: "lastname", // Explicit mapping
-		},
+		firstname: { type: String, required: true, trim: true, maxlength: 100 },
+		lastname: { type: String, required: true, trim: true, maxlength: 100 },
 		email: {
-			type: DataTypes.STRING(100),
-			allowNull: false,
+			type: String,
+			required: true,
 			unique: true,
-			validate: {
-				isEmail: true,
-			},
+			lowercase: true,
+			maxlength: 100,
 		},
-		password: {
-			type: DataTypes.STRING(100),
-			allowNull: false,
-		},
-		created_at: {
-			type: DataTypes.DATE,
-			defaultValue: DataTypes.NOW,
-			field: "created_at",
-		},
-		updated_at: {
-			type: DataTypes.DATE,
-			defaultValue: DataTypes.NOW,
-			field: "updated_at",
-		},
+		program: { type: String, required: true, maxlength: 50 },
+		password: { type: String, required: true, minlength: 6 },
 	},
 	{
-		sequelize,
-		modelName: "User",
-		tableName: "users",
-		timestamps: true,
-		underscored: true, // Handles timestamp fields
-		createdAt: "created_at",
-		updatedAt: "updated_at",
+		timestamps: true, // Automatically creates createdAt and updatedAt
 	}
 );
+
+// 3. Create model
+const User: Model<IUser> = mongoose.model<IUser>("User", UserSchema);
 
 export default User;

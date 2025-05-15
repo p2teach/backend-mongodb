@@ -1,131 +1,60 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import { initializeSequelize } from "../config/database";
-import { UserAttributes } from "./User";
+import mongoose, { Schema, Document, Types } from "mongoose";
 import { isValidAddress } from "ethereumjs-util";
-import User from "./User";
+import { IUser } from "./User";
 
-const sequelize = initializeSequelize();
-
-export interface BookingAttributes {
-	id: number;
+export interface IBooking extends Document {
 	location: string;
 	date: Date;
 	time: string;
-	tutorid: number;
-	studentid: number;
+	tutor: Types.ObjectId | IUser;
+	student: Types.ObjectId | IUser;
 	tutorwalletaddress: string;
 	studentwalletaddress: string;
-	created_at?: Date;
-	updated_at?: Date;
+	createdAt?: Date;
+	updatedAt?: Date;
 }
 
-export interface BookingCreationAttributes 
-    extends Optional<BookingAttributes, "id" | "created_at" | "updated_at"> {}
-
-class Booking extends Model<BookingAttributes, BookingCreationAttributes> 
-    implements BookingAttributes {
-    
-    public id!: number; // Changed from string to number
-    public location!: string;
-    public date!: Date;
-    public time!: string;
-    public tutorid!: number; // Changed from string to number
-    public studentid!: number; // Changed from string to number
-    public tutorwalletaddress!: string;
-    public studentwalletaddress!: string;
-    public created_at!: Date;
-    public updated_at!: Date;
-
-    public readonly tutor?: UserAttributes;
-    public readonly student?: UserAttributes;
-}
-
-Booking.init(
-    {
-        id: {
-            type: DataTypes.INTEGER, // Changed from UUID to INTEGER
-            primaryKey: true,
-            autoIncrement: true, // Added to match SERIAL
-        },
-        location: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        date: {
-            type: DataTypes.DATEONLY,
-            allowNull: false,
-        },
-        time: {
-            type: DataTypes.TIME,
-            allowNull: false,
-        },
-        tutorid: {
-            type: DataTypes.INTEGER, // Changed from UUID to INTEGER
-            allowNull: false,
-            references: {
-                model: User,
-                key: "id",
-            },
-            onDelete: "CASCADE",
-        },
-        studentid: {
-            type: DataTypes.INTEGER, // Changed from UUID to INTEGER
-            allowNull: false,
-            references: {
-                model: User,
-                key: "id",
-            },
-            onDelete: "CASCADE",
-        },
-        tutorwalletaddress: {
-            type: DataTypes.STRING(255),
-            allowNull: false,
-            validate: {
-                isEthAddress(value: string) {
-                    if (!isValidAddress(value)) {
-                        throw new Error("Invalid Ethereum address");
-                    }
-                },
-            },
-        },
-        studentwalletaddress: {
-            type: DataTypes.STRING(255),
-            allowNull: false,
-            validate: {
-                isEthAddress(value: string) {
-                    if (!isValidAddress(value)) {
-                        throw new Error("Invalid Ethereum address");
-                    }
-                },
-            },
-        },
-        created_at: {
-            type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: DataTypes.NOW,
-        },
-        updated_at: {
-            type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: DataTypes.NOW,
-        },
-    },
-    {
-        sequelize,
-        modelName: "Booking",
-        tableName: "bookings",
-        timestamps: true,
-        underscored: true,
-        createdAt: "created_at",
-        updatedAt: "updated_at",
-    }
+const BookingSchema = new Schema<IBooking>(
+	{
+		location: { type: String, required: true },
+		date: { type: Date, required: true },
+		time: { type: String, required: true },
+		tutor: {
+			type: Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
+		student: {
+			type: Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
+		tutorwalletaddress: {
+			type: String,
+			required: true,
+			validate: {
+				validator: function (value: string) {
+					return isValidAddress(value);
+				},
+				message: "Invalid Ethereum address",
+			},
+		},
+		studentwalletaddress: {
+			type: String,
+			required: true,
+			validate: {
+				validator: function (value: string) {
+					return isValidAddress(value);
+				},
+				message: "Invalid Ethereum address",
+			},
+		},
+	},
+	{
+		timestamps: true,
+	}
 );
 
-// Associations
-Booking.belongsTo(User, { foreignKey: "tutorid", as: "tutor" });
-Booking.belongsTo(User, { foreignKey: "studentid", as: "student" });
-
-User.hasMany(Booking, { foreignKey: "tutorid", as: "tutorBookings" });
-User.hasMany(Booking, { foreignKey: "studentid", as: "studentBookings" });
+const Booking = mongoose.model<IBooking>("Booking", BookingSchema);
 
 export default Booking;

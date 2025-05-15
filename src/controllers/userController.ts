@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import User, { UserCreationAttributes } from "../models/User";
+import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { Op } from "sequelize";
+import User from "../models/User";
 
 dotenv.config();
 
@@ -15,7 +14,7 @@ interface AuthResponse {
 	message: string;
 	token?: string;
 	user?: {
-		id: number;
+		id: string; // MongoDB _id will be returned as string
 		email: string;
 		firstname: string;
 		lastname: string;
@@ -34,34 +33,30 @@ export const register = async (req: Request, res: Response<AuthResponse>) => {
 			});
 		}
 
-		const existingUser = await User.findOne({
-			where: {
-				[Op.or]: [{ email }],
-			},
-		});
+		const existingUser = await User.findOne({ email });
 
 		if (existingUser) {
 			return res.status(400).json({
 				success: false,
-				message: "Username or email already exists",
+				message: "Email already exists",
 			});
 		}
 
 		// Hash password
 		const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-		// Create new user with proper typing
+		// Create new user
 		const newUser = await User.create({
 			program,
 			firstname,
 			lastname,
 			email,
 			password: hashedPassword,
-		} as any); // Type assertion here
+		});
 
 		// Generate JWT token
 		const token = jwt.sign(
-			{ id: newUser.id, email: newUser.email },
+			{ id: newUser._id?.toString(), email: newUser.email },
 			JWT_SECRET,
 			{ expiresIn: "24h" }
 		);
@@ -72,7 +67,7 @@ export const register = async (req: Request, res: Response<AuthResponse>) => {
 			message: "User registered successfully",
 			token,
 			user: {
-				id: newUser.id,
+				id: newUser._id?.toString()!,
 				program: newUser.program,
 				email: newUser.email,
 				firstname: newUser.firstname,
@@ -99,7 +94,7 @@ export const login = async (req: Request, res: Response<AuthResponse>) => {
 			});
 		}
 
-		const user = await User.findOne({ where: { email } });
+		const user = await User.findOne({ email });
 
 		console.log("user data ---- user", user);
 
@@ -121,16 +116,18 @@ export const login = async (req: Request, res: Response<AuthResponse>) => {
 		}
 
 		// Generate JWT token
-		const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-			expiresIn: "24h",
-		});
+		const token = jwt.sign(
+			{ id: user._id?.toString(), email: user.email },
+			JWT_SECRET,
+			{ expiresIn: "24h" }
+		);
 
 		return res.status(200).json({
 			success: true,
 			message: "Login successful",
 			token,
 			user: {
-				id: user.id,
+				id: user._id?.toString()!,
 				program: user.program,
 				email: user.email,
 				firstname: user.firstname,
