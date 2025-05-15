@@ -14,7 +14,7 @@ dotConfig.config();
 
 app.use(
 	cors({
-		origin: "*",
+		origin: ["https://radiant-otter-f3ecff.netlify.app/", "*"],
 		methods: ["GET", "POST", "PUT", "DELETE"],
 		allowedHeaders: ["Content-Type", "Authorization"],
 		credentials: true,
